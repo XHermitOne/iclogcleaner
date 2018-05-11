@@ -17,6 +17,12 @@ except:
     print(u'ERROR! Import error ConfigParser module')
     exit(0)
 
+try:
+    import dialog
+except ImportError:
+    print(u'ERROR. Import error python-dialog')
+
+
 __version__ = (0, 0, 0, 1)
 
 # Кодировка коммандной оболочки по умолчанию
@@ -153,6 +159,54 @@ def INI2Dict(sINIFileName):
     return None
 
 
+DEFAULT_BACKGROUND_DIALOG_TITLE = u'Очистка диска от файлов журналов'
+
+DEFAULT_DLG_HEIGHT = 30
+DEFAULT_DLG_WIDTH = 100
+
+
+class icMainDialog(dialog.Dialog):
+    """
+    Главное одиалоговое окно программы.
+    """
+
+    def __init__(self, title=DEFAULT_BACKGROUND_DIALOG_TITLE,
+                 height=DEFAULT_DLG_HEIGHT, width=DEFAULT_DLG_WIDTH,
+                 items=(), *args, **kwargs):
+        dialog.Dialog.__init__(self, *args, **kwargs)
+
+        self.title = title
+        self.width = width
+        self.height = height
+
+        choices = [(items[i * 3], items[i * 3 + 1],
+                    items[i * 3 + 2]) for i in range(len(items) / 3)]
+        self.choices = choices
+
+        try:
+            self.set_background_title(title)
+        except AttributeError:
+            # Для поддержки более ранних версий
+            self.setBackgroundTitle(title)
+
+    def main(self):
+        """
+        Запуск диалога.
+        @return:
+        """
+        try:
+            if self.choices:
+                self.result = self.checklist(text=self.title, width=self.width, height=self.height,
+                                             list_height=1, choices=self.choices)
+            else:
+                self.result = (self.msgbox(u'ВНИМАНИЕ! Пустой список выбора',
+                               width=self.width, height=self.height, title=self.title), None)
+            return self.result[0] == self.OK, self.result[1:]
+        except:
+            fatal(u'Ошибка запуска диалогового окна')
+        return False, None
+
+
 def main():
     """
     Главная запускаемая процедура.
@@ -161,6 +215,9 @@ def main():
     ini_filename = os.path.join(os.path.dirname(__file__), 'settings.ini')
     ini_dict = INI2Dict(ini_filename)
 
+    dlg = icMainDialog(items=(u'txt1', u'text1', 3, u'text2', u'txt2', 5))
+    result = dlg.main()
+    debug(u'Check list <%s>' % str(result))
 
 
 if __name__ == '__main__':
