@@ -159,29 +159,30 @@ def INI2Dict(sINIFileName):
     return None
 
 
-DEFAULT_BACKGROUND_DIALOG_TITLE = u'Очистка диска от файлов журналов'
+DEFAULT_BACKGROUND_DIALOG_TITLE = '---'    #'Очистка диска от файлов журналов'
 
 DEFAULT_DLG_HEIGHT = 30
 DEFAULT_DLG_WIDTH = 100
+DEFAULT_LIST_ITEM_COUNT = 20
 
 
-class icMainDialog(dialog.Dialog):
+class icCheckListDialog(dialog.Dialog):
     """
-    Главное одиалоговое окно программы.
+    Диалоговое окно со списком чекбоксов.
     """
 
     def __init__(self, title=DEFAULT_BACKGROUND_DIALOG_TITLE,
                  height=DEFAULT_DLG_HEIGHT, width=DEFAULT_DLG_WIDTH,
-                 items=(), *args, **kwargs):
+                 item_count=DEFAULT_LIST_ITEM_COUNT, items=(),
+                 *args, **kwargs):
         dialog.Dialog.__init__(self, *args, **kwargs)
 
         self.title = title
         self.width = width
         self.height = height
 
-        choices = [(items[i * 3], items[i * 3 + 1],
-                    items[i * 3 + 2]) for i in range(len(items) / 3)]
-        self.choices = choices
+        self.item_count = item_count
+        self.items = items
 
         try:
             self.set_background_title(title)
@@ -195,9 +196,9 @@ class icMainDialog(dialog.Dialog):
         @return:
         """
         try:
-            if self.choices:
+            if self.items:
                 self.result = self.checklist(text=self.title, width=self.width, height=self.height,
-                                             list_height=1, choices=self.choices)
+                                             list_height=self.item_count, choices=self.items)
             else:
                 self.result = (self.msgbox(u'ВНИМАНИЕ! Пустой список выбора',
                                width=self.width, height=self.height, title=self.title), None)
@@ -205,6 +206,15 @@ class icMainDialog(dialog.Dialog):
         except:
             fatal(u'Ошибка запуска диалогового окна')
         return False, None
+
+
+def do_checklist(title=DEFAULT_BACKGROUND_DIALOG_TITLE,
+                 height=DEFAULT_DLG_HEIGHT, width=DEFAULT_DLG_WIDTH,
+                 list_height=DEFAULT_LIST_ITEM_COUNT, items=()):
+    choices = [(items[i*3], items[i*3+1],
+                items[i*3+2]) for i in range(len(items)/3)]
+    return icCheckListDialog(title=title, width=width, height=height,
+                             item_count=list_height, items=choices)
 
 
 def main():
@@ -215,7 +225,7 @@ def main():
     ini_filename = os.path.join(os.path.dirname(__file__), 'settings.ini')
     ini_dict = INI2Dict(ini_filename)
 
-    dlg = icMainDialog(items=(u'txt1', u'text1', 3, u'text2', u'txt2', 5))
+    dlg = do_checklist(items=('txt1', 'text1', 'on', 'text2', 'txt2', 'on'))
     result = dlg.main()
     debug(u'Check list <%s>' % str(result))
 
