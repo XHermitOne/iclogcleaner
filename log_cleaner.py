@@ -12,8 +12,11 @@ import traceback
 import locale
 
 try:
-    import ConfigParser
-except:
+    if sys.version_info.major == 2:
+        import ConfigParser
+    elif sys.version_info.major == 3:
+        import configparser as ConfigParser
+except ImportError:
     print(u'ERROR! Import error ConfigParser module')
     exit(0)
 
@@ -21,9 +24,10 @@ try:
     import dialog
 except ImportError:
     print(u'ERROR. Import error python-dialog')
+    exit(0)
 
 
-__version__ = (0, 0, 0, 1)
+__version__ = (0, 1, 1, 1)
 
 # Кодировка коммандной оболочки по умолчанию
 DEFAULT_ENCODING = sys.stdout.encoding if sys.platform.startswith('win') else locale.getpreferredencoding()
@@ -53,8 +57,6 @@ def print_color_txt(sTxt, sColor=NORMAL_COLOR_TEXT):
     @param sTxt: Текст.
     @param sColor: Консольный цвет.
     """
-    if type(sTxt) == unicode:
-        sTxt = sTxt.encode(get_default_encoding())
     if sys.platform.startswith('win'):
         # Для Windows систем цветовая раскраска отключена
         txt = sTxt
@@ -106,10 +108,10 @@ def fatal(sMsg=u''):
     try:
         msg = sMsg + u'\n' + trace_txt
     except UnicodeDecodeError:
-        if not isinstance(sMsg, unicode):
-            sMsg = unicode(sMsg, get_default_encoding())
-        if not isinstance(trace_txt, unicode):
-            trace_txt = unicode(trace_txt, get_default_encoding())
+        if not isinstance(sMsg, str):
+            sMsg = str(sMsg)
+        if not isinstance(trace_txt, str):
+            trace_txt = str(trace_txt)
         msg = sMsg + u'\n' + trace_txt
 
     print_color_txt('FATAL. ' + msg, RED_COLOR_TEXT)
@@ -159,7 +161,7 @@ def INI2Dict(sINIFileName):
     return None
 
 
-DEFAULT_BACKGROUND_DIALOG_TITLE = '---'    #'Очистка диска от файлов журналов'
+DEFAULT_BACKGROUND_DIALOG_TITLE = '---'    # 'Очистка диска от файлов журналов'
 
 DEFAULT_DLG_HEIGHT = 30
 DEFAULT_DLG_WIDTH = 100
@@ -170,7 +172,6 @@ class icCheckListDialog(dialog.Dialog):
     """
     Диалоговое окно со списком чекбоксов.
     """
-
     def __init__(self, title=DEFAULT_BACKGROUND_DIALOG_TITLE,
                  height=DEFAULT_DLG_HEIGHT, width=DEFAULT_DLG_WIDTH,
                  item_count=DEFAULT_LIST_ITEM_COUNT, items=(),
@@ -211,8 +212,9 @@ class icCheckListDialog(dialog.Dialog):
 def do_checklist(title=DEFAULT_BACKGROUND_DIALOG_TITLE,
                  height=DEFAULT_DLG_HEIGHT, width=DEFAULT_DLG_WIDTH,
                  list_height=DEFAULT_LIST_ITEM_COUNT, items=()):
+    choice_count = int(len(items)/3)
     choices = [(items[i*3], items[i*3+1],
-                items[i*3+2]) for i in range(len(items)/3)]
+                items[i*3+2]) for i in range(choice_count)]
     return icCheckListDialog(title=title, width=width, height=height,
                              item_count=list_height, items=choices)
 
